@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "450072023944",
+    "project_id": "holly-rex-spesa",
+    "storage_bucket": "holly-rex-spesa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:450072023944:android:38b60c7d010141bd99203d",
+        "android_client_info": {
+          "package_name": "com.hollyandrex.pontevocale"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "450072023944-po44qu8giu50ba00tk6pj370rq7vmje3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFWVprJTmMc8-L3iGgjOdACdMr0f2kIng"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "450072023944-po44qu8giu50ba00tk6pj370rq7vmje3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
