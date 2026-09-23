@@ -10,18 +10,21 @@ import com.google.firebase.firestore.FirebaseFirestore
 import android.app.RemoteInput
 import android.content.Intent
 import android.os.Bundle
+import android.content.Context
 
 class PonteService : NotificationListenerService() {
 
     companion object {
         var ultimaNotificaWhatsApp: StatusBarNotification? = null
         var ultimoBundleAzioni: Notification.Action? = null
+        var contextApp: Context? = null
 
         fun rispondiUltimoWhatsApp(testo: String){
             try{
                 val sbn = ultimaNotificaWhatsApp ?: return
                 val notification = sbn.notification
                 val azioni = notification.actions ?: return
+                val ctx = contextApp ?: return
                 for(azione in azioni){
                     if(azione.remoteInputs != null && azione.remoteInputs.isNotEmpty()){
                         val remoteInputs = azione.remoteInputs
@@ -32,7 +35,7 @@ class PonteService : NotificationListenerService() {
                         }
                         RemoteInput.addResultsToIntent(remoteInputs, intent, bundle)
                         try{
-                            azione.actionIntent.send(applicationContext, 0, intent)
+                            azione.actionIntent.send(ctx, 0, intent)
                             Log.d("PonteNOSTRO", "Risposta inviata: $testo")
                         }catch(e: Exception){
                             Log.e("PonteNOSTRO", "Errore invio risposta", e)
@@ -51,6 +54,7 @@ class PonteService : NotificationListenerService() {
 
     override fun onCreate() {
         super.onCreate()
+        contextApp = applicationContext
         FirebaseApp.initializeApp(this)
         db = FirebaseFirestore.getInstance()
         Log.d(TAG, "Ponte NOSTRO creato - Crew V4")
@@ -59,7 +63,6 @@ class PonteService : NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         if(sbn == null) return
         val pkg = sbn.packageName ?: return
-        // Filtra solo WhatsApp - puoi aggiungere altri pacchetti
         if(!pkg.contains("whatsapp") && !pkg.contains("com.whatsapp")) return
 
         val extras = sbn.notification.extras
@@ -67,12 +70,9 @@ class PonteService : NotificationListenerService() {
         val testo = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString() ?: ""
         if(testo.isBlank()) return
 
-        // Evita notifiche di gruppo o di servizio
         if(titolo.contains("WhatsApp") && testo.length < 2) return
 
-        // Salva per risposta diretta
         ultimaNotificaWhatsApp = sbn
-        // trova azione con RemoteInput per risposta
         for(act in sbn.notification.actions ?: emptyArray()){
             if(act.remoteInputs != null && act.remoteInputs.isNotEmpty()){
                 ultimoBundleAzioni = act
@@ -80,11 +80,9 @@ class PonteService : NotificationListenerService() {
             }
         }
 
-        // Leggi deviceId destinatario salvato
         val prefs = getSharedPreferences("ponte", MODE_PRIVATE)
         val deviceIdDest = prefs.getString("deviceId", "tutti") ?: "tutti"
 
-        // 1. Scrivi su notifiche_reali - fallback se FCM dorme (le 2 righe che mi hai chiesto tesoro)
         val doc = hashMapOf(
             "titolo" to titolo,
             "corpo" to testo,
@@ -105,12 +103,9 @@ class PonteService : NotificationListenerService() {
             .addOnSuccessListener { Log.d(TAG, "WhatsApp inviato a notifiche_reali: $titolo - $testo") }
             .addOnFailureListener { e -> Log.e(TAG, "Errore invio notifiche_reali", e) }
 
-        // 2. (Opzionale) Se hai Cloud Function che manda FCM da notifiche_reali, farà anche FCM
-        // Altrimenti la V4 lo becca già via onSnapshot - doppio ponte NOSTRO
         Log.d(TAG, "Ponte: $titolo -> $testo verso $deviceIdDest")
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
-        // opzionale
     }
 }
