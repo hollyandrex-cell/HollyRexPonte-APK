@@ -8,7 +8,7 @@
         android:allowBackup="true"
         android:icon="@android:drawable/sym_def_app_icon"
         android:label="Holly &amp; Rex - Ponte Vocale"
-        android:theme="@android:style/Theme.DeviceDefault.Light">
+        android:theme="@style/Theme.HollyRex"
         <activity
             android:name=".MainActivity"
             android:exported="true"
