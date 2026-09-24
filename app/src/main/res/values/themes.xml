@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.HollyRex" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="colorPrimary">#7B5BFE</item>
+        <item name="colorPrimaryDark">#5A3FCC</item>
+        <item name="colorAccent">#7B5BFE</item>
+    </style>
+</resources>
