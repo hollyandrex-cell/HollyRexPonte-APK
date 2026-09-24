@@ -6,10 +6,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" />
 
-            <application
+    <application
         android:allowBackup="true"
-        android:icon="@android:mipmap/sym_def_app_icon"
+        android:icon="@mipmap/sym_def_app_icon"
         android:label="HollyRex Ponte"
         android:theme="@style/Theme.HollyRex"
         tools:replace="android:theme">
@@ -27,6 +28,16 @@
             android:name=".PonteService"
             android:exported="false"
             android:foregroundServiceType="microphone" />
+
+        <service
+            android:name=".PonteNotificationService"
+            android:label="HollyRex Ponte"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
 
     </application>
 </manifest>
