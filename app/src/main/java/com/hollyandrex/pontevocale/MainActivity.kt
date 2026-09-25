@@ -28,9 +28,32 @@ class MainActivity : AppCompatActivity() {
         FirebaseApp.initializeApp(this)
         db = FirebaseFirestore.getInstance()
 
-        // === WEBVIEW OFFLINE V5 - TESORO NOSTRO - 0 GIGA ===
+        // === WEBVIEW OFFLINE V5 - FIX VOCI SBLOCCATE - TESORO NOSTRO - 0 GIGA ===
         webView = findViewById(R.id.webView)
-        webView.webViewClient = WebViewClient()
+        webView.webChromeClient = android.webkit.WebChromeClient()
+        webView.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                view?.evaluateJavascript("""
+                    (function() {
+                        function sbloccaVoci() {
+                            try {
+                                var v = window.speechSynthesis.getVoices();
+                                if (v.length > 0) {
+                                    if (typeof caricaVoci === 'function') caricaVoci();
+                                    if (typeof populateVoiceList === 'function') populateVoiceList();
+                                    if (typeof loadVoices === 'function') loadVoices();
+                                }
+                            } catch(e) {}
+                        }
+                        sbloccaVoci();
+                        window.speechSynthesis.onvoiceschanged = sbloccaVoci;
+                        setTimeout(sbloccaVoci, 500);
+                        setTimeout(sbloccaVoci, 1500);
+                    })();
+                """.trimIndent(), null)
+            }
+        }
         val settings = webView.settings
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
@@ -38,6 +61,7 @@ class MainActivity : AppCompatActivity() {
         settings.allowFileAccessFromFileURLs = true
         settings.allowUniversalAccessFromFileURLs = true
         settings.javaScriptCanOpenWindowsAutomatically = true
+        settings.mediaPlaybackRequiresUserGesture = false
         // Carica la pagina DENTRO l'APK, non da GitHub!
         webView.loadUrl("file:///android_asset/assistente-vocale-v4-finale.html")
 
