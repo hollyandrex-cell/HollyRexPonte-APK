@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- MANIFEST AGGIORNATO PER NOVA FAMILY BUILD 20 - CORRETTO ICONA -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.hollyandrex.pontevocale">
 
-    <!-- Permessi per Ponte Vocale -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
@@ -17,7 +15,6 @@
         android:label="@string/app_name"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
-        <!-- ATTIVITA' PRINCIPALE - QUESTA FA COMPARIRE L'ICONA! -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -28,14 +25,19 @@
             </intent-filter>
         </activity>
 
-        <!-- Servizi del Ponte -->
         <service
             android:name=".PonteService"
             android:exported="false" />
 
         <service
             android:name=".PonteNotificationService"
-            android:exported="false" />
+            android:label="Ponte Vocale"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
 
     </application>
 </manifest>
