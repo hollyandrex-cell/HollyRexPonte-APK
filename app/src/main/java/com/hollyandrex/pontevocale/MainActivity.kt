@@ -3,6 +3,7 @@ package com.hollyandrex.pontevocale
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
+import android.speech.tts.TextToSpeech
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Button
@@ -14,13 +15,16 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import java.util.*
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
     private lateinit var db: FirebaseFirestore
     private var risposteListener: ListenerRegistration? = null
     private lateinit var statusText: TextView
     private lateinit var inputDeviceId: EditText
     private lateinit var webView: WebView
+    private var tts: TextToSpeech? = null
+    private var ttsReady = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,32 +32,11 @@ class MainActivity : AppCompatActivity() {
         FirebaseApp.initializeApp(this)
         db = FirebaseFirestore.getInstance()
 
-        // === WEBVIEW OFFLINE V5 - FIX VOCI SBLOCCATE - TESORO NOSTRO - 0 GIGA ===
+        // TTS NATIVO OFFLINE - 0 GIGA - FUNZIONA SEMPRE
+        tts = TextToSpeech(this, this)
+
         webView = findViewById(R.id.webView)
-        webView.webChromeClient = android.webkit.WebChromeClient()
-        webView.webViewClient = object : WebViewClient() {
-            override fun onPageFinished(view: WebView?, url: String?) {
-                super.onPageFinished(view, url)
-                view?.evaluateJavascript("""
-                    (function() {
-                        function sbloccaVoci() {
-                            try {
-                                var v = window.speechSynthesis.getVoices();
-                                if (v.length > 0) {
-                                    if (typeof caricaVoci === 'function') caricaVoci();
-                                    if (typeof populateVoiceList === 'function') populateVoiceList();
-                                    if (typeof loadVoices === 'function') loadVoices();
-                                }
-                            } catch(e) {}
-                        }
-                        sbloccaVoci();
-                        window.speechSynthesis.onvoiceschanged = sbloccaVoci;
-                        setTimeout(sbloccaVoci, 500);
-                        setTimeout(sbloccaVoci, 1500);
-                    })();
-                """.trimIndent(), null)
-            }
-        }
+        webView.webViewClient = WebViewClient()
         val settings = webView.settings
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
@@ -62,7 +45,6 @@ class MainActivity : AppCompatActivity() {
         settings.allowUniversalAccessFromFileURLs = true
         settings.javaScriptCanOpenWindowsAutomatically = true
         settings.mediaPlaybackRequiresUserGesture = false
-        // Carica la pagina DENTRO l'APK, non da GitHub!
         webView.loadUrl("file:///android_asset/assistente-vocale-v4-finale.html")
 
         statusText = findViewById(R.id.statusText)
@@ -71,7 +53,6 @@ class MainActivity : AppCompatActivity() {
         val btnAvvia = findViewById<Button>(R.id.btnAvvia)
         val btnTest = findViewById<Button>(R.id.btnTest)
 
-        // carica deviceId salvato da V4 finale (crew_device_id)
         val prefs = getSharedPreferences("ponte", MODE_PRIVATE)
         val savedId = prefs.getString("deviceId", "")
         inputDeviceId.setText(savedId)
@@ -84,21 +65,28 @@ class MainActivity : AppCompatActivity() {
         btnAvvia.setOnClickListener {
             val deviceId = inputDeviceId.text.toString().trim()
             if(deviceId.isEmpty()){
-                Toast.makeText(this, "Inserisci deviceId della V4 (es: device_abc123) o 'tutti'", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Inserisci deviceId o 'tutti'", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
             prefs.edit().putString("deviceId", deviceId).apply()
             startService(Intent(this, PonteService::class.java))
             avviaListenerRisposte(deviceId)
-            statusText.text = "✅ Ponte NOSTRO attivo V5 OFFLINE\nDevice: $deviceId\nWebView: file:///android_asset/\nLeggo WhatsApp veri e mando a notifiche_reali + fcm_tokens"
+            statusText.text = "✅ Ponte V5 OFFLINE ATTIVO\nDevice: $deviceId\nTTS Nativo: ${if(ttsReady) "PRONTO" else "carico..."}\n0 giga"
             Toast.makeText(this, "Ponte V5 OFFLINE avviato! 0 giga 💛", Toast.LENGTH_SHORT).show()
+            parlaNativo("Ponte avviato. Pronto a leggere WhatsApp. Zero giga.")
         }
 
+        // TEST CHE PARLA DAVVERO OFFLINE - NON USA PIU FIREBASE PER PARLARE
         btnTest.setOnClickListener {
+            val testo = "Ciao tesoro, test ponte nostro V5 offline funziona! Zero giga! Dio cane finalmente parla!"
+            parlaNativo(testo)
+            statusText.text = "✅ TEST NATIVO PARLATO OFFLINE!\nSe hai sentito, il TTS funziona a 0 giga!"
+
+            // prova anche a inviare a Firebase (opzionale)
             val deviceId = inputDeviceId.text.toString().ifEmpty { "tutti" }
             val test = hashMapOf(
                 "titolo" to "WhatsApp da Test Ponte V5 OFFLINE",
-                "corpo" to "Ciao tesoro, test ponte NOSTRO V5 OFFLINE funziona! 💛 0 giga!",
+                "corpo" to testo,
                 "mittente" to "Test Holly V5",
                 "da" to "Test Holly",
                 "tipo" to "whatsapp",
@@ -106,22 +94,42 @@ class MainActivity : AppCompatActivity() {
                 "deviceIdDestinatario" to deviceId,
                 "creato" to FieldValue.serverTimestamp(),
                 "letto" to false,
-                "origine" to "apk-nostra-v5-offline"
+                "origine" to "apk-nostra-v5-offline-nativo"
             )
             db.collection("notifiche_reali").add(test)
-                .addOnSuccessListener { statusText.text = "✅ Test V5 OFFLINE inviato a notifiche_reali\nLa WebView dovrebbe parlare!" }
-                .addOnFailureListener { e -> statusText.text = "❌ Errore test: ${e.message}" }
         }
 
-        // avvia automatico se già configurato
         if(!savedId.isNullOrEmpty()){
             avviaListenerRisposte(savedId)
-            // avvia anche il ponte automaticamente
             startService(Intent(this, PonteService::class.java))
         }
     }
 
-    // Ascolta risposte_pending per rispondere davvero su WhatsApp con RemoteInput
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            val result = tts?.setLanguage(Locale.ITALIAN)
+            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                tts?.language = Locale.US
+                statusText.text = "⚠️ Voce italiana mancante, uso inglese. Installa TTS italiano!"
+            } else {
+                ttsReady = true
+                statusText.text = "✅ TTS Nativo PRONTO - 0 giga\nClicca TEST per provare!"
+                // parla subito appena pronto
+                parlaNativo("Sintesi vocale pronta, tesoro. Zero giga.")
+            }
+        }
+    }
+
+    private fun parlaNativo(testo: String) {
+        try {
+            tts?.stop()
+            // QUEUE_FLUSH per parlare subito
+            tts?.speak(testo, TextToSpeech.QUEUE_FLUSH, null, "test_id")
+        } catch (e: Exception) {
+            Toast.makeText(this, "Errore TTS: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
     private fun avviaListenerRisposte(deviceIdMio: String){
         risposteListener?.remove()
         risposteListener = db.collection("risposte_pending")
@@ -132,17 +140,12 @@ class MainActivity : AppCompatActivity() {
                     if(doc.type == com.google.firebase.firestore.DocumentChange.Type.ADDED){
                         val data = doc.document.data
                         val testoRisposta = data["risposta"] as? String ?: continue
-                        val destinatario = data["destinatario"] as? String ?: data["mittente"] as? String ?: ""
                         val deviceDest = data["deviceIdDestinatario"] as? String
-                        // se è per questo telefono o per tutti
                         if(deviceDest != null && deviceDest != deviceIdMio && deviceDest != "tutti") continue
-                        // Prova a rispondere tramite PonteService
                         PonteService.rispondiUltimoWhatsApp(testoRisposta)
-                        // Segna come inviato e poi cancella per non intasare Firebase - idea tua tesoro
                         db.collection("risposte_pending").document(doc.document.id)
                             .update(mapOf("inviato" to true, "inviatoIl" to FieldValue.serverTimestamp()))
                             .addOnSuccessListener {
-                                // cancella dopo 3 secondi per risparmiare spazio - come dicevi tu
                                 android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                                     db.collection("risposte_pending").document(doc.document.id).delete()
                                 }, 3000)
@@ -156,9 +159,10 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         risposteListener?.remove()
+        tts?.stop()
+        tts?.shutdown()
     }
 
-    // Tasto indietro: se WebView può tornare indietro, torna indietro, altrimenti chiudi
     override fun onBackPressed() {
         if(::webView.isInitialized && webView.canGoBack()){
             webView.goBack()
