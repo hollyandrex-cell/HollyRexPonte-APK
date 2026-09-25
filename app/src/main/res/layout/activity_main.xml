@@ -3,78 +3,88 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="20dp"
     android:background="#0a0c14">
-    <TextView
+
+    <!-- WEBVIEW OFFLINE V5 - OCCUPA TUTTO LO SCHERMO SOPRA -->
+    <WebView
+        android:id="@+id/webView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- PANNELLO PONTE SOTTO - COMPATTO -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="💛 Holly &amp; Rex - Ponte Vocale NOSTRO"
-        android:textSize="20sp"
-        android:textColor="#f8d59e"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:layout_marginBottom="16dp"/>
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Crew V4 - Aura Live + Live Spesa + Risposta Vocale - Senza pubblicità, gratis per sempre"
-        android:textColor="#94a3b8"
-        android:textSize="12sp"
-        android:gravity="center"
-        android:layout_marginBottom="20dp"/>
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Device ID della V4 (vedilo in V4 finale dopo Attiva Aura Live, es: device_abc123) - lascia 'tutti' se non sai:"
-        android:textColor="#f8d59e"
-        android:textSize="13sp"/>
-    <EditText
-        android:id="@+id/inputDeviceId"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="tutti oppure device_xxx"
-        android:textColor="#f8d59e"
-        android:textColorHint="#64748b"
-        android:backgroundTint="#334155"
-        android:layout_marginTop="8dp"/>
-    <Button
-        android:id="@+id/btnPermesso"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="1️⃣ Dai permesso Notifiche"
-        android:layout_marginTop="16dp"/>
-    <Button
-        android:id="@+id/btnAvvia"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="2️⃣ Avvia Ponte NOSTRO"
-        android:layout_marginTop="8dp"/>
-    <Button
-        android:id="@+id/btnTest"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="🧪 Test - manda WhatsApp finto alla V4"
-        android:layout_marginTop="8dp"/>
-    <TextView
-        android:id="@+id/statusText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="⏳ Ponte non ancora avviato"
-        android:textColor="#94a3b8"
-        android:background="#1e293b"
-        android:padding="12dp"
-        android:layout_marginTop="20dp"/>
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Come funziona NOSTRO:
-• Legge notifiche WhatsApp vere
-• Scrive in notifiche_reali (fallback se FCM dorme)
-• La V4 le legge in live e Aura parla
-• Tu rispondi a voce nella V4 → scrive in risposte_pending
-• L'APK risponde davvero su WhatsApp con RemoteInput
-• Poi cancella per non intasare Firebase - idea tua tesoro 💛"
-        android:textColor="#64748b"
-        android:textSize="11sp"
-        android:layout_marginTop="16dp"/>
+        android:orientation="vertical"
+        android:padding="10dp"
+        android:background="#1e293b">
+
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="💛 V5 OFFLINE - Ponte NOSTRO"
+            android:textColor="#f8d59e"
+            android:textSize="12sp"
+            android:padding="6dp"
+            android:background="#0f172a"
+            android:fontFamily="monospace" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="6dp">
+
+            <EditText
+                android:id="@+id/inputDeviceId"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="deviceId es: device_abc123 o tutti"
+                android:textColor="#f8d59e"
+                android:textColorHint="#94a3b8"
+                android:backgroundTint="#334155"
+                android:textSize="12sp"
+                android:padding="8dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="6dp">
+
+            <Button
+                android:id="@+id/btnPermesso"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🔔 Permesso"
+                android:textSize="11sp"
+                android:layout_marginEnd="3dp" />
+
+            <Button
+                android:id="@+id/btnAvvia"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="▶ Avvia Ponte"
+                android:textSize="11sp"
+                android:layout_marginStart="3dp"
+                android:layout_marginEnd="3dp" />
+
+            <Button
+                android:id="@+id/btnTest"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🧪 Test"
+                android:textSize="11sp"
+                android:layout_marginStart="3dp" />
+
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>
