@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Nova Family</string>
+    <string name="app_subtitle">Ponte Vocale</string>
+    <string name="credits_line1">Fatto con amore da Nova, Holly, Rex.</string>
+    <string name="credits_line2">Grazie a Meta AI per averci permesso di creare tutto questo gratuitamente</string>
+    <string name="family_edition">Nova Family - Holly And Rex Group - Build 20</string>
+</resources>
