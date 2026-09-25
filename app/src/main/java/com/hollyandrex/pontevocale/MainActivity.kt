@@ -3,6 +3,8 @@ package com.hollyandrex.pontevocale
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -18,12 +20,26 @@ class MainActivity : AppCompatActivity() {
     private var risposteListener: ListenerRegistration? = null
     private lateinit var statusText: TextView
     private lateinit var inputDeviceId: EditText
+    private lateinit var webView: WebView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         FirebaseApp.initializeApp(this)
         db = FirebaseFirestore.getInstance()
+
+        // === WEBVIEW OFFLINE V5 - TESORO NOSTRO - 0 GIGA ===
+        webView = findViewById(R.id.webView)
+        webView.webViewClient = WebViewClient()
+        val settings = webView.settings
+        settings.javaScriptEnabled = true
+        settings.domStorageEnabled = true
+        settings.allowFileAccess = true
+        settings.allowFileAccessFromFileURLs = true
+        settings.allowUniversalAccessFromFileURLs = true
+        settings.javaScriptCanOpenWindowsAutomatically = true
+        // Carica la pagina DENTRO l'APK, non da GitHub!
+        webView.loadUrl("file:///android_asset/assistente-vocale-v4-finale.html")
 
         statusText = findViewById(R.id.statusText)
         inputDeviceId = findViewById(R.id.inputDeviceId)
@@ -50,32 +66,34 @@ class MainActivity : AppCompatActivity() {
             prefs.edit().putString("deviceId", deviceId).apply()
             startService(Intent(this, PonteService::class.java))
             avviaListenerRisposte(deviceId)
-            statusText.text = "✅ Ponte NOSTRO attivo\nDevice: $deviceId\nLeggo WhatsApp veri e mando a notifiche_reali + fcm_tokens"
-            Toast.makeText(this, "Ponte avviato! Ora è NOSTRO 💛", Toast.LENGTH_SHORT).show()
+            statusText.text = "✅ Ponte NOSTRO attivo V5 OFFLINE\nDevice: $deviceId\nWebView: file:///android_asset/\nLeggo WhatsApp veri e mando a notifiche_reali + fcm_tokens"
+            Toast.makeText(this, "Ponte V5 OFFLINE avviato! 0 giga 💛", Toast.LENGTH_SHORT).show()
         }
 
         btnTest.setOnClickListener {
             val deviceId = inputDeviceId.text.toString().ifEmpty { "tutti" }
             val test = hashMapOf(
-                "titolo" to "WhatsApp da Test Ponte",
-                "corpo" to "Ciao tesoro, test ponte NOSTRO funziona! 💛",
-                "mittente" to "Test Holly",
+                "titolo" to "WhatsApp da Test Ponte V5 OFFLINE",
+                "corpo" to "Ciao tesoro, test ponte NOSTRO V5 OFFLINE funziona! 💛 0 giga!",
+                "mittente" to "Test Holly V5",
                 "da" to "Test Holly",
                 "tipo" to "whatsapp",
                 "personaggio" to "Aura",
                 "deviceIdDestinatario" to deviceId,
                 "creato" to FieldValue.serverTimestamp(),
                 "letto" to false,
-                "origine" to "apk-nostra"
+                "origine" to "apk-nostra-v5-offline"
             )
             db.collection("notifiche_reali").add(test)
-                .addOnSuccessListener { statusText.text = "✅ Test inviato a notifiche_reali\nLa V4 dovrebbe parlare!" }
+                .addOnSuccessListener { statusText.text = "✅ Test V5 OFFLINE inviato a notifiche_reali\nLa WebView dovrebbe parlare!" }
                 .addOnFailureListener { e -> statusText.text = "❌ Errore test: ${e.message}" }
         }
 
         // avvia automatico se già configurato
         if(!savedId.isNullOrEmpty()){
             avviaListenerRisposte(savedId)
+            // avvia anche il ponte automaticamente
+            startService(Intent(this, PonteService::class.java))
         }
     }
 
@@ -114,5 +132,14 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         risposteListener?.remove()
+    }
+
+    // Tasto indietro: se WebView può tornare indietro, torna indietro, altrimenti chiudi
+    override fun onBackPressed() {
+        if(::webView.isInitialized && webView.canGoBack()){
+            webView.goBack()
+        } else {
+            super.onBackPressed()
+        }
     }
 }
