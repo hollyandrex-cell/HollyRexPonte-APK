@@ -13,8 +13,8 @@ android {
         applicationId "com.hollyandrex.pontevocale"
         minSdk 24
         targetSdk 34
-        versionCode 4
-        versionName "4.0-NOSTRA"
+        versionCode 20
+        versionName "20.0 - Nova Family Edition"
     }
 
     buildTypes {
