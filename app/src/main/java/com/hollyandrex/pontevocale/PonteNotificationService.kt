@@ -10,7 +10,7 @@ class PonteNotificationService : NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         if (sbn == null) return
-        if (sbn.packageName != "com.whatsapp") return
+        if (sbn.packageName != "com.whatsapp" && sbn.packageName != "com.whatsapp.w4b") return
 
         val extras = sbn.notification.extras
         val title = extras.getString("android.title") ?: "WhatsApp"
