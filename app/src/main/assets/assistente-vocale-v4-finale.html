@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Holly & Rex - Assistente Vocale Crew V4 - Noi Tre + Aura + Live Spesa + Risposta Vocale</title>
+<title>Holly & Rex - APK V5 OFFLINE 0 GIGA - Crew V4 - Noi Tre + Aura + Live Spesa + Risposta Vocale</title>
 <link rel="icon" href="./bau-192x192.png" type="image/png">
 <link rel="apple-touch-icon" href="./bau-192x192.png">
 <link rel="manifest" href="./manifest.json">
@@ -350,43 +350,20 @@ button:hover{background:#4338ca}
 
   const statusEl = document.getElementById('fcmStatus');
   window.richiediPermessoPush = async function(){
-    // Se siamo in APK file:// - non usare Service Worker
-    if(location.protocol === 'file:'){
-      statusEl.textContent = '✅ Modalità APK 0 giga - FCM nativo attivo';
-      return;
-    }
-
     try{
       const perm = await Notification.requestPermission();
       if(perm !== 'granted'){ alert('Permesso negato'); return; }
-      statusEl.textContent = 'Permesso ok, registro SW in Telefono/...';
-
-      // --- FIX PER TENERE TUTTO IN Telefono/ SENZA ROOT ---
-      const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js', {
-        scope: './'
-      });
-      await navigator.serviceWorker.ready;
-
       statusEl.textContent = 'Permesso ok, genero token...';
-      // Passa il registration che sta in Telefono/, non quello di root
-      const token = await getToken(messaging, { 
-        vapidKey: VAPID_KEY,
-        serviceWorkerRegistration: registration
-      });
-
+      const token = await getToken(messaging, { vapidKey: VAPID_KEY });
       if(token){
         await salvaTokenAutomatico(token);
-        statusEl.textContent = '✅ Aura Live V4 ATTIVA in Telefono/ (no root)';
+        statusEl.textContent = '✅ Aura Live V4 ATTIVA su GitHub Pages';
         document.getElementById('btnAbilitaPush').textContent = '✅ Aura Live V4 Attiva';
         document.getElementById('btnAbilitaPush').style.background = '#334155';
         document.getElementById('btnAbilitaPush').classList.remove('pulse');
-        if(window.parlaConCrew) window.parlaConCrew("Capitano, sono online V4. Live spesa e risposta vocale attive. Siamo in Telefono, senza toccare la root.", "Aura");
+        if(window.parlaConCrew) window.parlaConCrew("Capitano, sono online V4. Live spesa e risposta vocale attive.", "Aura");
       }
-    }catch(err){
-      console.error(err);
-      statusEl.textContent = '⚠️ Errore: ' + err.message;
-      alert('Errore: ' + err.message + '\n\nControlla che firebase-messaging-sw.js sia in Telefono/');
-    }
+    }catch(err){ statusEl.textContent = 'Errore: ' + err.message; alert(err.message); console.error(err); }
   }
 
   if(Notification.permission === 'granted'){
@@ -424,9 +401,18 @@ function caricaVoci(){
 if('speechSynthesis' in window){ window.speechSynthesis.onvoiceschanged = caricaVoci; setTimeout(caricaVoci, 300); }
 function pulisciPerVoce(testo){ if(!testo) return ""; return testo.replace(/\p{Extended_Pictographic}/gu,'').replace(/\p{Emoji_Presentation}/gu,'').replace(/[\uFE00-\uFE0F\u200D]/g,'').replace(/[✨★灵🌙📞💬✉🔊🧪🎙🎛⚙☁🏠]/g,'').replace(/\s+/g,' ').trim(); }
 function parlaConCrew(testo, personaggio){
+  const pulito = pulisciPerVoce(testo); if(!pulito) return;
+  // APK 0 GIGA - tenta TTS NATIVO
+  if(window.AndroidTTS && window.AndroidTTS.parlaNativo){
+    try{ window.AndroidTTS.parlaNativo(pulito); console.log('🔊 NATIVO:', pulito); }catch(e){ console.log('AndroidTTS err', e); }
+    // Aggiorna UI comunque
+    try{ const cfg = VOCI_CREW[personaggio] || VOCI_CREW.Nova; document.getElementById('anteprimaTesto').innerHTML = `<b>${cfg.prefissoUI}</b>${pulito}`; }catch(e){}
+    try{ localStorage.setItem('crew_personaggio_preferito', personaggio); }catch(e){}
+    if(pulito.toLowerCase().includes('whatsapp') || pulito.toLowerCase().includes('nuova voce')){ try{document.getElementById('azioniRapide').style.display='flex';}catch(e){} }
+    return;
+  }
   window.speechSynthesis.cancel();
   const cfg = VOCI_CREW[personaggio] || VOCI_CREW.Nova;
-  const pulito = pulisciPerVoce(testo); if(!pulito) return;
   const u = new SpeechSynthesisUtterance(pulisciPerVoce(cfg.prefissoVoc) + ' ' + pulito);
   u.lang='it-IT'; u.rate=cfg.rate; u.pitch=cfg.pitch; u.volume=cfg.volume;
   const selIdx = document.getElementById('selectVoceSistema').value; if(vociSistema[selIdx]) u.voice = vociSistema[selIdx];
@@ -439,6 +425,9 @@ function parlaConCrew(testo, personaggio){
   }
 }
 window.parlaConCrew = parlaConCrew;
+window.parla = parlaConCrew;
+window.speak = parlaConCrew;
+window.riproduci = function(){ parlaConCrew(document.getElementById('testo-vocale').value, document.getElementById('personaggio-voce-test').value); };
 function parlaTesto(){ parlaConCrew(document.getElementById('testo-vocale').value, document.getElementById('personaggio-voce-test').value); }
 
 function simulaArrivoNotifica(){
