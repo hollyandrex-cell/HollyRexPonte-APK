@@ -350,20 +350,43 @@ button:hover{background:#4338ca}
 
   const statusEl = document.getElementById('fcmStatus');
   window.richiediPermessoPush = async function(){
+    // Se siamo in APK file:// - non usare Service Worker
+    if(location.protocol === 'file:'){
+      statusEl.textContent = '✅ Modalità APK 0 giga - FCM nativo attivo';
+      return;
+    }
+
     try{
       const perm = await Notification.requestPermission();
       if(perm !== 'granted'){ alert('Permesso negato'); return; }
+      statusEl.textContent = 'Permesso ok, registro SW in Telefono/...';
+
+      // --- FIX PER TENERE TUTTO IN Telefono/ SENZA ROOT ---
+      const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js', {
+        scope: './'
+      });
+      await navigator.serviceWorker.ready;
+
       statusEl.textContent = 'Permesso ok, genero token...';
-      const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+      // Passa il registration che sta in Telefono/, non quello di root
+      const token = await getToken(messaging, { 
+        vapidKey: VAPID_KEY,
+        serviceWorkerRegistration: registration
+      });
+
       if(token){
         await salvaTokenAutomatico(token);
-        statusEl.textContent = '✅ Aura Live V4 ATTIVA su GitHub Pages';
+        statusEl.textContent = '✅ Aura Live V4 ATTIVA in Telefono/ (no root)';
         document.getElementById('btnAbilitaPush').textContent = '✅ Aura Live V4 Attiva';
         document.getElementById('btnAbilitaPush').style.background = '#334155';
         document.getElementById('btnAbilitaPush').classList.remove('pulse');
-        if(window.parlaConCrew) window.parlaConCrew("Capitano, sono online V4. Live spesa e risposta vocale attive.", "Aura");
+        if(window.parlaConCrew) window.parlaConCrew("Capitano, sono online V4. Live spesa e risposta vocale attive. Siamo in Telefono, senza toccare la root.", "Aura");
       }
-    }catch(err){ statusEl.textContent = 'Errore: ' + err.message; alert(err.message); console.error(err); }
+    }catch(err){
+      console.error(err);
+      statusEl.textContent = '⚠️ Errore: ' + err.message;
+      alert('Errore: ' + err.message + '\n\nControlla che firebase-messaging-sw.js sia in Telefono/');
+    }
   }
 
   if(Notification.permission === 'granted'){
