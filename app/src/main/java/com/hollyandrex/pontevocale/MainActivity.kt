@@ -79,7 +79,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                 """.trimIndent(), null)
             }
         }
-        webView.loadUrl("file:///android_asset/assistente-vocale-v4-finale.html")
+        webView.loadUrl("file:///android_asset/assistente-vocale-v5-finale.html")
 
         statusText = findViewById(R.id.statusText)
         inputDeviceId = findViewById(R.id.inputDeviceId)
