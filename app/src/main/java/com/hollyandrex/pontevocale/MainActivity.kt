@@ -98,7 +98,13 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
             val deviceId = inputDeviceId.text.toString().trim()
             if(deviceId.isEmpty()){ Toast.makeText(this, "Inserisci deviceId o tutti", Toast.LENGTH_LONG).show(); return@setOnClickListener }
             prefs.edit().putString("deviceId", deviceId).apply()
-            startService(Intent(this, PonteService::class.java))
+            // FIX: NON startService() su un NotificationListenerService: non lo attiva.
+            // Lo attiva solo Android quando l'utente lo abilita in Impostazioni.
+            // Qui verifichiamo solo se e' attivo e, se no, mandiamo l'utente a abilitarlo.
+            if (!isListenerAttivo()) {
+                Toast.makeText(this, "Attiva prima il permesso notifiche: ti apro Impostazioni", Toast.LENGTH_LONG).show()
+                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            }
             avviaListenerRisposte(deviceId)
             statusText.text = "✅ Ponte ATTIVO V5 NATIVO\nDevice: $deviceId\nTTS: ${if(ttsReady) "PRONTO" else "carico..."}"
             parla("Ponte avviato. Pronto.")
@@ -113,7 +119,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         }
 
         val saved = prefs.getString("deviceId", "")
-        if(!saved.isNullOrEmpty()){ avviaListenerRisposte(saved); startService(Intent(this, PonteService::class.java)) }
+        if(!saved.isNullOrEmpty()){ avviaListenerRisposte(saved); if(!isListenerAttivo()) statusText.text = "⚠️ Listener notifiche NON attivo: premi Permesso e attiva 'Holly & Rex Ponte'" }
     }
 
     override fun onInit(status: Int) {
@@ -141,6 +147,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
                     db.collection("risposte_pending").document(doc.document.id).update(mapOf("inviato" to true))
                 }}
             }
+    }
+    // FIX: dice se Android ha davvero collegato PonteService come listener.
+    // E' l'unico modo affidabile: startService() non basta, serve questo.
+    private fun isListenerAttivo(): Boolean {
+        val flat = Settings.Secure.getString(contentResolver, "enabled_notification_listeners") ?: return false
+        return flat.contains(packageName)
     }
     override fun onDestroy(){ super.onDestroy(); risposteListener?.remove(); tts?.stop(); tts?.shutdown() }
     override fun onBackPressed(){ if(webView.canGoBack()) webView.goBack() else super.onBackPressed() }

@@ -157,6 +157,10 @@ class PonteService : NotificationListenerService() {
             "creato" to FieldValue.serverTimestamp(),
             "letto" to false,
             "origine" to "apk-nostra-ponte-vocale-v5-offline",
+            // FIX campi legacy: la vecchia pagina cercava questi nomi
+            "deviceId" to deviceIdDest,
+            "messaggio" to testo,
+            "timestamp" to System.currentTimeMillis(),
             "package" to pkg
         )
         db.collection("notifiche_reali").add(doc)
